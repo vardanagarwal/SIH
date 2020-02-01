@@ -16,7 +16,7 @@ from IPython.display import clear_output
 SIZE = 128
 N_CLASSES = 2
 
-def parse_image(img_path: str) -> dict:
+def parse_image_train(img_path: str) -> dict:
     image = tf.io.read_file(img_path)
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.image.convert_image_dtype(image, tf.uint8)
@@ -30,10 +30,24 @@ def parse_image(img_path: str) -> dict:
     mask = tf.where(mask == 255, np.dtype('uint8').type(1), mask)
     return {'image': image, 'segmentation_mask': mask}
 
+def parse_image_validate(img_path: str) -> dict:
+    image = tf.io.read_file(img_path)
+    image = tf.image.decode_jpeg(image, channels=3)
+    image = tf.image.convert_image_dtype(image, tf.uint8)
+
+    mask_path = tf.strings.regex_replace(img_path, "validation", "mask")
+    mask_path = tf.strings.regex_replace(mask_path, "jpg", "png")
+    mask_path = tf.strings.regex_replace(mask_path, r'[0-9]+', "0")
+
+    mask = tf.io.read_file(mask_path)
+    mask = tf.image.decode_png(mask, channels=1)
+    mask = tf.where(mask == 255, np.dtype('uint8').type(1), mask)
+    return {'image': image, 'segmentation_mask': mask}
+
 train_imgs = tf.data.Dataset.list_files("data/first/training/*.jpg")
 val_imgs = tf.data.Dataset.list_files("data/first/validation/*.jpg")
-train_set = train_imgs.map(parse_image)
-test_set = val_imgs.map(parse_image)
+train_set = train_imgs.map(parse_image_train)
+test_set = val_imgs.map(parse_image_validate)
 dataset = {"train": train_set, "test": test_set}
 
 def normalize(input_image: tf.Tensor, input_mask: tf.Tensor) -> tuple:
@@ -64,7 +78,7 @@ def load_image_test(datapoint: dict) -> tuple:
 train_imgs = glob("data/first/training/*.jpg")
 TRAIN_LENGTH = len(train_imgs)
 
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 BUFFER_SIZE = 500
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
@@ -115,7 +129,7 @@ class DisplayCallback(tf.keras.callbacks.Callback):
 
 EPOCHS = 5
 VAL_SUBSPLITS = 2
-VALIDATION_STEPS = 1500//BATCH_SIZE//VAL_SUBSPLITS
+VALIDATION_STEPS = 2000//BATCH_SIZE//VAL_SUBSPLITS
 
 model_history = model.fit(train_dataset, epochs=EPOCHS,
                           steps_per_epoch=STEPS_PER_EPOCH,
