@@ -10,16 +10,16 @@ import shutil
 import pandas as pd
 from tqdm import tqdm
 
-# os.makedirs('0_training')
-# os.makedirs('0_testing')
-# os.makedirs('1_training')
-# os.makedirs('1_testing') 
+os.makedirs('0_training')
+os.makedirs('0_testing')
+os.makedirs('1_training')
+os.makedirs('1_testing') 
 
 
 train_set = pd.read_csv('train.csv')
-test_set = pd.read_csv('predicted_clusters.csv')
-sets = [test_set]#[train_set, test_set]
-set_name = '_testing'
+test_set = pd.read_csv('predicted_clusters.csv') 
+sets = [train_set, test_set]
+set_name = '_training'
 
 for i in sets:
     for j in tqdm(range(len(i))):
