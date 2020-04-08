@@ -38,6 +38,18 @@ print(classification_report(y_test,y_pred))
 # weighted avg       0.99      0.99      0.99     15637
 
 #%%
+camids = [75, 1093, 5021, 19834, 8438]
+df = pd.concat([df1[df1['CamId'].isin(camids)], df2[df2['CamId'].isin(camids)]])
+
+df1 = df1[~df1['CamId'].isin(camids)]
+df2 = df2[~df2['CamId'].isin(camids)]
+
+X_train = df1.iloc[:, 2:-1].values
+X_test = df2.iloc[:, 2:-1].values
+y_train = df1.iloc[:, -1].values
+y_test = df2.iloc[:, -1].values
+
+
 import xgboost as xgb
 
 xgb_model = xgb.XGBClassifier(
@@ -60,17 +72,44 @@ y_pred = xgb_model.predict(X_test)
 print(confusion_matrix(y_test,y_pred))
 print(classification_report(y_test,y_pred))
 
-# [[9607   59]
-#  [  58 5912]]
+# [[8874   59]
+#  [  55 5566]]
 #               precision    recall  f1-score   support
 
-#            0       0.99      0.99      0.99      9666
-#            1       0.99      0.99      0.99      5971
+#            0       0.99      0.99      0.99      8933
+#            1       0.99      0.99      0.99      5621
 
-#     accuracy                           0.99     15637
-#    macro avg       0.99      0.99      0.99     15637
-# weighted avg       0.99      0.99      0.99     15637
+#     accuracy                           0.99     14554
+#    macro avg       0.99      0.99      0.99     14554
+# weighted avg       0.99      0.99      0.99     14554
 
+#%%
+meta = pd.read_csv('meta.csv')
+meta = meta[meta.CamId == 10917]
+X = meta.iloc[:, -40:].values
+Y = xgb_model.predict(X)
+cluster_10917 = meta.iloc[:, :2]
+cluster_10917.insert(2, 'labels', Y)
+cluster_10917.to_csv('cluster_10917.csv', index=False)
+ #%%
+X = df.iloc[:, 2:-1].values
+Y = xgb_model.predict(X)
+y_test = df.iloc[:, -1].values
+print(confusion_matrix(y_test, Y))
+print(classification_report(y_test, Y))
+
+df4 = pd.concat([df.iloc[:, :2].reset_index(drop=True), pd.DataFrame(Y, columns=['label'])], axis=1)
+df4.to_csv('Final_test_set.csv', index=False)
+# [[3853   32]
+#  [  21 1774]]
+#               precision    recall  f1-score   support
+
+#            0       0.99      0.99      0.99      3885
+#            1       0.98      0.99      0.99      1795
+
+#     accuracy                           0.99      5680
+#    macro avg       0.99      0.99      0.99      5680
+# weighted avg       0.99      0.99      0.99      5680
 #%%
 from sklearn.ensemble import RandomForestClassifier
 
